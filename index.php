@@ -2,6 +2,7 @@
 session_start();
 
 /* ===== CONFIG DATABASE ===== */
+/* Untuk hosting, sesuaikan dbHost, dbName, dbUser, dan dbPass dengan database hosting. */
 $dbHost = 'localhost';
 $dbName = 'raice_db';
 $dbUser = 'root';
@@ -87,7 +88,7 @@ function safe_filename_base($text)
 function product_image_src($image)
 {
     $image = trim((string) $image);
-    $defaultImage = 'images/products/placeholder.png';
+    $defaultImage = 'images/STRAWBERRY.png';
 
     if ($image === '') {
         return $defaultImage;
@@ -308,28 +309,29 @@ function render_user_footer()
     ?>
 <footer class="footer-section footer-clean">
     <div class="container">
-        <div class="row align-items-center footer-row">
-            <div class="col-md-5 footer-left">
+        <div class="footer-content">
+            <div class="footer-left">
                 <a class="footer-brand raice-logo raice-logo-footer" href="index.php?page=home#home">
                     <span class="logo-pop">RA</span><span class="logo-dash">-</span><span class="logo-ice">ICE</span>
                 </a>
-                <p class="mb-0">Rasa Ice. Es Lilin Segar untuk Setiap Mood.</p>
             </div>
-            <div class="col-md-4 text-center footer-links">
-                <div class="footer-link-row mb-2">
+            <div class="footer-center">
+                <small class="footer-copyright">&copy; 2026 RA-ICE. All rights reserved.</small>
+            </div>
+            <div class="footer-right">
+                <nav class="footer-menu mb-3" aria-label="Menu footer">
+                    <a href="index.php?page=home#home">Home</a>
                     <a href="index.php?page=home#menu">Menu</a>
-                    <a href="index.php?page=home#mood">Mood</a>
                     <a href="index.php?page=home#order">Order</a>
                     <a href="index.php?page=home#about">About</a>
+                </nav>
+                <div class="footer-contact-list">
+                    <p class="footer-contact mb-2"><strong>No HP:</strong> 0822 8678 7554</p>
+                    <p class="footer-contact mb-3"><strong>Alamat:</strong> Kampung Mangun Harjo, Blok B, No 28</p>
                 </div>
-                <p class="footer-contact mb-2">No HP: 0822 8678 7554</p>
-                <p class="footer-contact mb-2">Alamat: Kampung mangun harjo, Blok B, No 28</p>
-                <div class="footer-link-row">
-                    <a href="https://wa.me/+6285270074585" aria-label="WhatsApp RA-ICE">WhatsApp</a>
-                </div>
-            </div>
-            <div class="col-md-3 footer-right">
-                <p class="mb-0">&copy; 2026 RA-ICE</p>
+                <a class="footer-wa-link" href="https://wa.me/6282286787554" target="_blank" rel="noopener" aria-label="Chat RA-ICE lewat WhatsApp">
+                    <img src="images/whatsapp.png" alt="WhatsApp" class="footer-wa-icon">
+                </a>
             </div>
         </div>
     </div>
@@ -359,10 +361,10 @@ function render_admin_sidebar($activeAdminPage)
 
 /* ===== DATA PILIHAN PRODUK DAN MOOD ===== */
 $cardClasses = [
-    'strawberry' => 'menu-card-strawberry',
-    'melon-milk' => 'menu-card-melon',
-    'chocolate-milk' => 'menu-card-chocolate',
-    'durian-cream' => 'menu-card-durian',
+    'strawberry' => 'card-strawberry',
+    'melon-milk' => 'card-melon',
+    'chocolate-milk' => 'card-chocolate',
+    'durian-cream' => 'card-durian',
 ];
 
 $buttonClasses = [
@@ -427,7 +429,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $customerName = trim($_POST['name'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
         $email = trim($_POST['email'] ?? '');
-        $address = trim($_POST['address'] ?? '');
         $notes = trim($_POST['notes'] ?? '');
         $postedItems = $_POST['items'] ?? [];
         $orderQuantities = [];
@@ -446,7 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$pdo) {
             $orderMessage = $dbError;
             $orderMessageType = 'danger';
-        } elseif ($customerName === '' || $phone === '' || $address === '') {
+        } elseif ($customerName === '' || $phone === '') {
             $orderMessage = 'Lengkapi data pesanan terlebih dahulu.';
             $orderMessageType = 'danger';
         } elseif (!$orderQuantities) {
@@ -480,6 +481,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $product = $selectedProducts[$productId];
+                    if ((int) $product['stock'] <= 0) {
+                        throw new RuntimeException('Maaf, saat ini stok ' . $product['name'] . ' belum tersedia.');
+                    }
+
                     if ((int) $product['stock'] < $quantity) {
                         throw new RuntimeException('Stok produk ' . $product['name'] . ' tidak cukup.');
                     }
@@ -495,8 +500,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                 }
 
-                $stmt = $pdo->prepare('INSERT INTO customers (name, phone, email, address) VALUES (?, ?, ?, ?)');
-                $stmt->execute([$customerName, $phone, $email !== '' ? $email : null, $address]);
+                $stmt = $pdo->prepare('INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)');
+                $stmt->execute([$customerName, $phone, $email !== '' ? $email : null]);
                 $customerId = (int) $pdo->lastInsertId();
 
                 $stmt = $pdo->prepare('INSERT INTO orders (customer_id, total_amount, status, notes) VALUES (?, ?, ?, ?)');
@@ -833,14 +838,14 @@ if ($page === 'home') {
                             <article class="card menu-card <?= h($cardClass) ?> h-100">
                                 <div class="menu-card-media">
                                     <img src="<?= h($product['image']) ?>" class="card-img-top" alt="<?= h($product['name']) ?> RA-ICE">
-                                    <span class="menu-sticker"><?= h($product['mood_label']) ?></span>
+                                    <span class="menu-sticker flavor-sticker"><?= h($product['mood_label']) ?></span>
                                 </div>
                                 <div class="card-body">
                                     <div class="menu-card-top mb-3">
                                         <div>
                                             <h3 class="card-title"><?= h($product['name']) ?></h3>
                                         </div>
-                                        <span class="price-pill"><?= rupiah($product['price']) ?></span>
+                                        <span class="price-pill flavor-price"><?= rupiah($product['price']) ?></span>
                                     </div>
                                     <p class="card-text"><?= h($product['description']) ?></p>
                                     <a class="btn raice-btn <?= h($buttonClass) ?> w-100" href="index.php?page=home#order" data-order-product="<?= (int) $product['product_id'] ?>">Pesan Rasa Ini</a>
@@ -914,7 +919,7 @@ if ($page === 'home') {
                                 <label for="whatsapp" class="form-label">Nomor WhatsApp</label>
                                 <input type="tel" class="form-control" id="whatsapp" name="phone" placeholder="0812xxxx" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" name="email" placeholder="Opsional">
                             </div>
@@ -922,10 +927,25 @@ if ($page === 'home') {
                                 <label class="form-label">Pilih Rasa</label>
                                 <div class="product-choice-grid">
                                     <?php foreach ($products as $product): ?>
-                                        <?php $orderInputId = 'orderItem' . (int) $product['product_id']; ?>
-                                        <div class="product-choice-card">
-                                            <h4 class="product-choice-name"><?= h($product['name']) ?></h4>
-                                            <p class="product-choice-meta"><?= rupiah($product['price']) ?> &middot; Stok <?= h($product['stock']) ?></p>
+                                        <?php
+                                        $orderInputId = 'orderItem' . (int) $product['product_id'];
+                                        $styleKey = safe_filename_base($product['flavor'] ?: $product['name']);
+                                        $cardClass = $cardClasses[$styleKey] ?? '';
+                                        $isOutOfStock = (int) $product['stock'] <= 0;
+                                        ?>
+                                        <div class="product-choice-card <?= h($cardClass) ?><?= $isOutOfStock ? ' product-choice-empty' : '' ?>">
+                                            <div class="product-choice-head">
+                                                <div class="product-choice-media">
+                                                    <img src="<?= h($product['image']) ?>" alt="<?= h($product['name']) ?> RA-ICE">
+                                                </div>
+                                                <div class="product-choice-copy">
+                                                    <h4 class="product-choice-name"><?= h($product['name']) ?></h4>
+                                                    <p class="product-choice-meta"><?= rupiah($product['price']) ?> &middot; <?= $isOutOfStock ? 'Stok habis' : 'Stok ' . h($product['stock']) ?></p>
+                                                </div>
+                                            </div>
+                                            <?php if ($isOutOfStock): ?>
+                                                <p class="product-choice-stock-message mb-0">Maaf, saat ini stok belum tersedia.</p>
+                                            <?php endif; ?>
 
                                             <div class="quantity-box">
                                                 <button type="button" class="quantity-btn minus-btn" aria-label="Kurangi jumlah">-</button>
@@ -950,10 +970,6 @@ if ($page === 'home') {
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label for="alamat" class="form-label">Alamat</label>
-                                <textarea class="form-control" id="alamat" name="address" rows="3" placeholder="Alamat pengiriman" required></textarea>
-                            </div>
-                            <div class="col-12">
                                 <label for="catatan" class="form-label">Catatan</label>
                                 <textarea class="form-control" id="catatan" name="notes" rows="3" placeholder="Contoh: ambil sore, tanpa campur, atau catatan lainnya"></textarea>
                             </div>
@@ -961,7 +977,7 @@ if ($page === 'home') {
                                 <button type="submit" class="btn raice-btn raice-btn-primary w-100" <?= !$products ? 'disabled' : '' ?>>Kirim Pesanan</button>
                             </div>
                         </form>
-                        <div class="order-summary mt-4 d-none" id="orderSummary"></div>
+                        <div class="order-summary mt-4 d-none" id="orderSummary" aria-live="polite"></div>
                     </div>
                 </div>
             </div>
@@ -1462,8 +1478,7 @@ if ($page === 'orders') {
                         c.customer_id,
                         c.name AS customer_name,
                         c.phone,
-                        c.email,
-                        c.address
+                        c.email
                     FROM orders o
                     JOIN customers c ON o.customer_id = c.customer_id
                     WHERE o.order_id = ?
@@ -1529,19 +1544,9 @@ if ($page === 'orders') {
                     <a class="btn admin-btn admin-btn-small admin-btn-ghost" href="index.php?page=orders">Close Detail</a>
                 </div>
 
-                <div class="row admin-content-row mb-4">
-                    <div class="col-md-6">
-                        <div class="admin-inline-message">
-                            <strong>Alamat:</strong><br>
-                            <?= nl2br(h($selectedOrder['address'])) ?>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="admin-inline-message">
-                            <strong>Catatan:</strong><br>
-                            <?= h($selectedOrder['notes'] ?: '-') ?>
-                        </div>
-                    </div>
+                <div class="admin-inline-message mb-4">
+                    <strong>Catatan:</strong><br>
+                    <?= h($selectedOrder['notes'] ?: '-') ?>
                 </div>
 
                 <div class="table-responsive">

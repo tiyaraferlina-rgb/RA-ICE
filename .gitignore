@@ -1,0 +1,18 @@
+# File sistem/editor
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# File sementara/backup/export
+*.log
+*.tmp
+*.bak
+*.backup
+*.old
+*.zip
+*.rar
+*.7z
+
+# Gambar upload runtime dari admin, foldernya tetap disimpan dengan .gitkeep
+images/products/*
+!images/products/.gitkeep

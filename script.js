@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     var PRODUCT_PRICE = 1000;
+    var STOCK_UNAVAILABLE_MESSAGE = "Maaf, saat ini stok belum tersedia.";
     var moodDataElement = document.getElementById("raiceMoodData");
     var MOOD_PRODUCTS = {};
 
@@ -24,7 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var minusButtons = document.querySelectorAll(".minus-btn");
     var plusButtons = document.querySelectorAll(".plus-btn");
     var confirmForms = document.querySelectorAll("[data-confirm-message]");
-    var adminToastButtons = document.querySelectorAll("[data-admin-toast]");
 
     var selectedMood = "";
     var moodTimer = null;
@@ -60,6 +60,34 @@ document.addEventListener("DOMContentLoaded", function () {
         return matchedInput;
     }
 
+    function showOrderSummary(message) {
+        if (!orderSummary || !message) {
+            return;
+        }
+
+        orderSummary.classList.remove("d-none");
+        orderSummary.textContent = message;
+    }
+
+    function getStockUnavailableMessage(input) {
+        var productName = input && input.dataset.productName ? input.dataset.productName : "";
+
+        if (productName) {
+            return "Maaf, saat ini stok " + productName + " belum tersedia.";
+        }
+
+        return STOCK_UNAVAILABLE_MESSAGE;
+    }
+
+    function isInputOutOfStock(input) {
+        if (!input) {
+            return false;
+        }
+
+        var maxValue = parseInt(input.dataset.max, 10);
+        return !isNaN(maxValue) && maxValue <= 0;
+    }
+
     function clampQuantityInput(input, value) {
         if (!input) {
             return;
@@ -86,6 +114,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function selectOrderProduct(productId) {
         var input = getOrderQuantityInput(productId);
+
+        if (isInputOutOfStock(input)) {
+            clampQuantityInput(input, 0);
+            showOrderSummary(getStockUnavailableMessage(input));
+            return;
+        }
 
         if (input && !input.disabled) {
             var currentValue = parseInt(input.value, 10) || 0;
@@ -150,26 +184,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectOrderProduct(link.dataset.moodOrderProduct);
             });
         });
-    }
-
-    function showAdminToast(message) {
-        if (!message) {
-            return;
-        }
-
-        var previousToast = document.querySelector(".admin-toast");
-        if (previousToast) {
-            previousToast.remove();
-        }
-
-        var toast = document.createElement("div");
-        toast.className = "admin-toast";
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        window.setTimeout(function () {
-            toast.remove();
-        }, 2400);
     }
 
     // ===== NAVBAR SCROLL =====
@@ -256,6 +270,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
+            if (isInputOutOfStock(input)) {
+                clampQuantityInput(input, 0);
+                showOrderSummary(getStockUnavailableMessage(input));
+                return;
+            }
+
             var currentValue = parseInt(input.value, 10) || 0;
             clampQuantityInput(input, currentValue + 1);
             input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -265,6 +285,13 @@ document.addEventListener("DOMContentLoaded", function () {
     orderQuantityInputs.forEach(function (input) {
         input.addEventListener("input", function () {
             var onlyNumbers = String(input.value || "").replace(/[^0-9]/g, "");
+
+            if (isInputOutOfStock(input) && Number(onlyNumbers || 0) > 0) {
+                clampQuantityInput(input, 0);
+                showOrderSummary(getStockUnavailableMessage(input));
+                return;
+            }
+
             clampQuantityInput(input, onlyNumbers);
 
             if (orderSummary) {
@@ -299,11 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!hasSelectedProduct) {
                 event.preventDefault();
-
-                if (orderSummary) {
-                    orderSummary.classList.remove("d-none");
-                    orderSummary.textContent = "Pilih minimal satu produk.";
-                }
+                showOrderSummary("Pilih minimal satu produk.");
             }
         });
     }
@@ -316,12 +339,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!window.confirm(message)) {
                 event.preventDefault();
             }
-        });
-    });
-
-    adminToastButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-            showAdminToast(button.dataset.adminToast);
         });
     });
 });
