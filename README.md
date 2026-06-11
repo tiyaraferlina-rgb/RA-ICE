@@ -1,14 +1,26 @@
-WEBSITE URL
+# RA-ICE Website Project
+
+RA-ICE adalah website UMKM es lilin yang menyediakan fitur menu produk, mood recommendation, order form, dan admin dashboard.
+
+## Website URL
 https://bluebvrriee.web.id
 
-ADMIN 
-username : admin_raice
-password : admin123
+## Database
+Database script tersedia pada folder:
 
-DESCRIPTION
-Website UMKM es lilin dengan fitur menu produk, mood recommendation, order form, dan admin dashboard.
+database/raice_db.sql
 
-NAMA KELOMPOK
-1. Tiyara Ferlina 2531178
-2. Nabila Rasya 2531112 
-3. James Wikinson 2431047
+## Documentation
+Dokumentasi project tersedia pada file:
+
+RA-ICE_Project_Documentation.pdf
+
+Dokumentasi berisi:
+- Wireframe
+- Sitemap
+- Design Rationale
+
+## Team Members
+1. Tiyara Ferlina - 2531178
+2. Nabila Rasya - 2531112
+3. James Wikinson - 2431047
